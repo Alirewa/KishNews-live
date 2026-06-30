@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  /* KishEase design tokens, ported from KishEase_Design_System.html */
+  --deep-ocean: #0b3b5c;
+  --persian-gulf: #1a7ba0;
+  --turquoise: #2ec4d9;
+  --foam: #a8e6ef;
+  --sand: #e8d5a3;
+  --dune: #c4a96a;
+  --coral: #e07b54;
+  --sunset: #f4a261;
+  --pearl: #f8f5ee;
+  --white: #ffffff;
+  --night: #0d1b2a;
+  --grey: #8a9bae;
+  --bg: #edeae3;
+
+  /* app chrome tokens, ported from KishEase_PostCreator.html */
+  --app-bg: #0f1923;
+  --app-sb: #16232f;
+  --app-panel: #1c2d3d;
+  --app-card: #213040;
+  --app-border: #2a3e52;
+  --app-text: #e2e8f0;
+  --app-muted: #7a92a8;
+}
+
+@theme inline {
+  --color-deep-ocean: var(--deep-ocean);
+  --color-persian-gulf: var(--persian-gulf);
+  --color-turquoise: var(--turquoise);
+  --color-foam: var(--foam);
+  --color-sand: var(--sand);
+  --color-dune: var(--dune);
+  --color-coral: var(--coral);
+  --color-sunset: var(--sunset);
+  --color-pearl: var(--pearl);
+  --color-night: var(--night);
+  --color-grey: var(--grey);
+
+  --color-app-bg: var(--app-bg);
+  --color-app-sb: var(--app-sb);
+  --color-app-panel: var(--app-panel);
+  --color-app-card: var(--app-card);
+  --color-app-border: var(--app-border);
+  --color-app-text: var(--app-text);
+  --color-app-muted: var(--app-muted);
+
+  --font-fa: var(--font-pelak-fa), sans-serif;
+  --font-en: var(--font-pelak), sans-serif;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: var(--font-pelak-fa), var(--font-pelak), sans-serif;
+}

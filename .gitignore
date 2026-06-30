@@ -8,3 +8,4 @@ web/out/
 web/.env*.local
 
 .DS_Store
+.claude/scheduled_tasks.lock

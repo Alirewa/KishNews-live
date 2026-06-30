@@ -8,7 +8,7 @@ import hashlib
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
@@ -17,6 +17,7 @@ import requests
 import trafilatura
 from bs4 import BeautifulSoup
 
+from dates import parse_any_date, to_jalali_display
 from sources import SOURCES
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -24,13 +25,14 @@ DATA_FILE = ROOT / "data" / "news.json"
 MAX_ITEMS = 400
 PER_SOURCE_LIMIT = 30
 REQUEST_TIMEOUT = 15
+MAX_AGE_HOURS = 48
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; KishNewsBot/1.0; +https://github.com/Alirewa/KishNews-live)"}
 
 IMAGE_SKIP_HINTS = ("logo", "icon", "favicon", "sprite", "avatar", "spinner", ".svg")
 
-
-def now_iso():
-    return datetime.now(timezone.utc).isoformat()
+# At least one of these must appear in the title or content for an article to be
+# considered Kish-related (listing/tag pages occasionally surface unrelated items).
+KEYWORDS = ("کیش",)
 
 
 def url_id(url):
@@ -132,14 +134,24 @@ def extract_article(url, source, encoding=None):
     content = (extracted or {}).get("text") or ""
     if not content:
         return None
+
+    if not any(kw in title or kw in content for kw in KEYWORDS):
+        return None
+
     summary = content.strip().replace("\n", " ")[:280]
 
-    published_at = None
+    raw_date = None
     date_meta = soup.find("meta", property="article:published_time")
     if date_meta and date_meta.get("content"):
-        published_at = date_meta["content"]
+        raw_date = date_meta["content"]
     elif extracted and extracted.get("date"):
-        published_at = extracted["date"]
+        raw_date = extracted["date"]
+
+    scraped_at = datetime.now(timezone.utc)
+    # Best-effort parse; if the source's date can't be understood, fall back to
+    # "now" so every article still gets a sensible, always-Jalali display date
+    # and a usable timestamp for the 48h freshness filter — never a hard error.
+    effective_dt = parse_any_date(raw_date) or scraped_at
 
     image = extract_image(soup, url)
 
@@ -152,8 +164,9 @@ def extract_article(url, source, encoding=None):
         "source": source["slug"],
         "sourceName": source["name"],
         "image": image,
-        "publishedAt": published_at,
-        "scrapedAt": now_iso(),
+        "publishedAt": to_jalali_display(effective_dt),
+        "publishedAtIso": effective_dt.isoformat(),
+        "scrapedAt": scraped_at.isoformat(),
     }
 
 
@@ -166,11 +179,15 @@ def load_existing():
         return []
 
 
-def sort_key(item):
-    # publishedAt is kept in each source's native display format (often Jalali, mixed
-    # with ISO from a few sites) so it isn't comparable across sources. scrapedAt is
-    # always ISO 8601 UTC from this scraper, so it's the reliable ordering key.
-    return item.get("scrapedAt") or ""
+def effective_dt(item):
+    """Best-effort reliable timestamp for an item, used for sorting and the
+    48h freshness filter. Falls back through publishedAtIso -> scrapedAt ->
+    parsing the (possibly legacy/Jalali) publishedAt string -> None."""
+    for key in ("publishedAtIso", "scrapedAt"):
+        dt = parse_any_date(item.get(key))
+        if dt:
+            return dt
+    return parse_any_date(item.get("publishedAt"))
 
 
 def main():
@@ -196,13 +213,26 @@ def main():
         for url in urls:
             if url in by_url:
                 continue
-            article = extract_article(url, source, source.get("encoding"))
+            try:
+                article = extract_article(url, source, source.get("encoding"))
+            except Exception as exc:  # a single bad article must never abort the run
+                print(f"  ! extraction crashed: {url} ({exc})", file=sys.stderr)
+                article = None
             if article:
                 by_url[url] = article
                 new_count += 1
         print(f"  added {new_count} new articles")
 
-    merged = sorted(by_url.values(), key=sort_key, reverse=True)[:MAX_ITEMS]
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=MAX_AGE_HOURS)
+    fresh = []
+    for item in by_url.values():
+        dt = effective_dt(item)
+        # No parseable date at all (shouldn't normally happen) is kept rather
+        # than silently dropped — visibility beats a hard filter here.
+        if dt is None or dt >= cutoff:
+            fresh.append(item)
+
+    merged = sorted(fresh, key=lambda i: effective_dt(i) or datetime.min.replace(tzinfo=timezone.utc), reverse=True)[:MAX_ITEMS]
 
     DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
     DATA_FILE.write_text(

@@ -1,8 +1,3 @@
-// Layer-based template model: a small set of decorative "chrome" (background
-// gradients/stripes — not editable) plus a handful of draggable, click-to-edit
-// text layers. Kept deliberately short per slide — long lists belong in extra
-// slides (see Creator's multi-slide support), not crammed into one image.
-
 export type TemplateFields = Record<string, string>;
 
 export interface TextLayer {
@@ -10,12 +5,11 @@ export interface TextLayer {
   fieldId: string;
   label: string;
   defaultVal: string;
-  big?: boolean; // multi-line input in the side panel
-  /** position & size as % of the canvas, draggable from these defaults */
+  big?: boolean;
   x: number;
   y: number;
   w: number;
-  fontSize: number; // px, relative to a 1080px-wide canvas
+  fontSize: number;
   fontWeight: number;
   color: string;
   align: "right" | "left" | "center";
@@ -40,18 +34,18 @@ export interface Template {
   h: number;
   layers: TextLayer[];
   configFields?: ConfigField[];
-  /** non-editable background chrome (gradient/stripe/overlay), as an HTML string */
   chrome: (fields: TemplateFields, bg: string | null, op: number) => string;
 }
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 
 export const TEMPLATES: Template[] = [
+  // ── پست ۱:۱ خبر فوری ───────────────────────────────────────────────────
   {
     id: "news-sq",
     cat: "پست ۱:۱  (1080×1080)",
     name: "خبر فوری",
-    icon: "⚡",
+    icon: "🔴",
     w: 1080,
     h: 1080,
     layers: [
@@ -59,15 +53,16 @@ export const TEMPLATES: Template[] = [
         id: "badge",
         fieldId: "badge",
         label: "تگ رویداد",
-        defaultVal: "⚡ خبر فوری",
+        defaultVal: "● خبر فوری",
         x: 7.4,
-        y: 9,
-        w: 50,
-        fontSize: 20,
+        y: 8,
+        w: 52,
+        fontSize: 26,
         fontWeight: 800,
         color: "#fff",
         align: "right",
-        pill: { bg: "#E07B54", color: "#fff" },
+        // red background, white dot reads as a live indicator
+        pill: { bg: "#D32F2F", color: "#fff" },
       },
       {
         id: "title",
@@ -76,9 +71,9 @@ export const TEMPLATES: Template[] = [
         defaultVal: "جشنواره موسیقی کیش این شهریور برگزار می‌شود",
         big: true,
         x: 7.4,
-        y: 38,
+        y: 36,
         w: 85,
-        fontSize: 54,
+        fontSize: 58,
         fontWeight: 900,
         color: "#fff",
         align: "right",
@@ -88,25 +83,32 @@ export const TEMPLATES: Template[] = [
         id: "meta",
         fieldId: "meta",
         label: "منبع / تاریخ",
-        defaultVal: "خبرگزاری کیش · امروز",
+        defaultVal: "KishEase · کیش ایز",
         x: 7.4,
-        y: 89,
+        y: 87,
         w: 85,
-        fontSize: 18,
-        fontWeight: 300,
-        color: "#A8E6EF",
+        fontSize: 26,
+        fontWeight: 500,
+        color: "#2EC4D9",
         align: "right",
+        letterSpacing: 1,
       },
     ],
     chrome(_f, bg, op) {
-      const bgS = bg ? `background:url(${bg}) center/cover no-repeat` : "background:linear-gradient(155deg,#0B3B5C,#0D2840)";
+      const bgS = bg
+        ? `background:url(${bg}) center/cover no-repeat`
+        : "background:linear-gradient(155deg,#0B3B5C,#0D2840)";
       const ovl = bg
         ? `<div style="position:absolute;inset:0;background:linear-gradient(155deg,rgba(11,59,92,${op}),rgba(13,40,64,${clamp(op + 0.15)}))"></div>`
         : "";
-      return `<div style="${bgS};position:absolute;inset:0"></div>${ovl}<div style="position:absolute;top:0;right:0;width:8px;height:100%;background:#E07B54"></div>`;
+      // stripe changed to red to match the new badge
+      return `<div style="${bgS};position:absolute;inset:0"></div>${ovl}
+      <div style="position:absolute;top:0;right:0;width:10px;height:100%;background:#D32F2F"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:120px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.5))"></div>`;
     },
   },
 
+  // ── معرفی مکان ۱:۱ ────────────────────────────────────────────────────
   {
     id: "loc-sq",
     cat: "پست ۱:۱  (1080×1080)",
@@ -121,12 +123,13 @@ export const TEMPLATES: Template[] = [
         label: "نام مکان (فارسی)",
         defaultVal: "پارک ساحلی المپیک",
         x: 7,
-        y: 70,
+        y: 65,
         w: 86,
-        fontSize: 56,
+        fontSize: 62,
         fontWeight: 900,
         color: "#fff",
         align: "right",
+        lineHeight: 1.3,
       },
       {
         id: "name_en",
@@ -134,12 +137,13 @@ export const TEMPLATES: Template[] = [
         label: "نام مکان (انگلیسی)",
         defaultVal: "Olympic Coastal Park · Kish",
         x: 7,
-        y: 81,
+        y: 78,
         w: 86,
-        fontSize: 18,
+        fontSize: 24,
         fontWeight: 300,
         color: "#A8E6EF",
         align: "right",
+        letterSpacing: 1,
       },
       {
         id: "desc",
@@ -147,22 +151,26 @@ export const TEMPLATES: Template[] = [
         label: "توضیح (یک خط)",
         defaultVal: "چشم‌انداز خیره‌کننده خلیج فارس",
         x: 7,
-        y: 88,
+        y: 87,
         w: 86,
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 400,
-        color: "rgba(255,255,255,.8)",
+        color: "rgba(255,255,255,.75)",
         align: "right",
       },
     ],
     chrome(_f, bg, op) {
-      const bgS = bg ? `background:url(${bg}) center/cover no-repeat` : "background:linear-gradient(160deg,#2EC4D9,#1A7BA0,#0B3B5C)";
+      const bgS = bg
+        ? `background:url(${bg}) center/cover no-repeat`
+        : "background:linear-gradient(160deg,#2EC4D9,#1A7BA0,#0B3B5C)";
       return `<div style="${bgS};position:absolute;inset:0"></div>
-      <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(11,59,92,${clamp(op + 0.15)}) 100%)"></div>
-      <div style="position:absolute;top:22px;right:22px;width:54px;height:54px;background:rgba(255,255,255,.14);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px">📍</div>`;
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(11,59,92,${clamp(op + 0.2)}) 100%)"></div>
+      <div style="position:absolute;top:28px;right:28px;width:64px;height:64px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;border:1px solid rgba(255,255,255,.25)">📍</div>
+      <div style="position:absolute;bottom:32px;left:28px;font-family:'Pelak',sans-serif;font-size:20px;font-weight:300;color:rgba(255,255,255,.3);letter-spacing:3px">@KishEase</div>`;
     },
   },
 
+  // ── پست عکسی ۴:۵ ──────────────────────────────────────────────────────
   {
     id: "photo-pt",
     cat: "پست ۴:۵  (1080×1350)",
@@ -176,14 +184,14 @@ export const TEMPLATES: Template[] = [
         fieldId: "cat",
         label: "دسته / تگ",
         defaultVal: "📸 طبیعت",
-        x: 60,
+        x: 58,
         y: 4,
-        w: 33,
-        fontSize: 16,
+        w: 35,
+        fontSize: 22,
         fontWeight: 600,
         color: "#fff",
         align: "right",
-        pill: { bg: "rgba(255,255,255,.14)", color: "#fff" },
+        pill: { bg: "rgba(255,255,255,.15)", color: "#fff" },
       },
       {
         id: "title",
@@ -192,9 +200,9 @@ export const TEMPLATES: Template[] = [
         defaultVal: "غروب آفتاب در ساحل شمالی کیش",
         big: true,
         x: 6.7,
-        y: 76,
+        y: 73,
         w: 86,
-        fontSize: 48,
+        fontSize: 54,
         fontWeight: 900,
         color: "#fff",
         align: "right",
@@ -203,24 +211,28 @@ export const TEMPLATES: Template[] = [
       {
         id: "loc",
         fieldId: "loc",
-        label: "موقعیت / منبع",
-        defaultVal: "📍 ساحل شمالی، کیش",
+        label: "منبع / موقعیت",
+        defaultVal: "KishEase · کیش ایز",
         x: 6.7,
-        y: 92,
+        y: 90,
         w: 70,
-        fontSize: 16,
-        fontWeight: 400,
-        color: "rgba(255,255,255,.6)",
+        fontSize: 24,
+        fontWeight: 500,
+        color: "#2EC4D9",
         align: "right",
+        letterSpacing: 1,
       },
     ],
     chrome(_f, bg, op) {
-      const bgS = bg ? `background:url(${bg}) center/cover no-repeat` : "background:linear-gradient(160deg,#164E70,#0B3B5C)";
+      const bgS = bg
+        ? `background:url(${bg}) center/cover no-repeat`
+        : "background:linear-gradient(160deg,#164E70,#0B3B5C)";
       return `<div style="${bgS};position:absolute;inset:0"></div>
-      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,59,92,.2) 0%,transparent 35%,rgba(11,59,92,${clamp(op + 0.1)}) 100%)"></div>`;
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,59,92,.25) 0%,transparent 30%,rgba(11,59,92,${clamp(op + 0.15)}) 100%)"></div>`;
     },
   },
 
+  // ── کاور ریلز ۹:۱۶ ────────────────────────────────────────────────────
   {
     id: "reels",
     cat: "ریلز / استوری ۹:۱۶  (1080×1920)",
@@ -230,33 +242,63 @@ export const TEMPLATES: Template[] = [
     h: 1920,
     layers: [
       {
+        // @KishEase handle centered at top — inside safe zone (below IG UI chrome ~220px)
+        id: "handle",
+        fieldId: "handle",
+        label: "ایدی پیج (بالا)",
+        defaultVal: "@KishEase",
+        x: 8,
+        y: 14,
+        w: 84,
+        fontSize: 32,
+        fontWeight: 400,
+        color: "rgba(255,255,255,.70)",
+        align: "center",
+        letterSpacing: 4,
+      },
+      {
+        // Main title centered in the bottom black zone, inside safe zone
         id: "title",
         fieldId: "title",
-        label: "عنوان (کوتاه — حداکثر ۲ خط)",
-        defaultVal: "جشنواره موسیقی کیش این شهریور",
+        label: "عنوان کاور (کوتاه — حداکثر ۲ خط)",
+        defaultVal: "جشنواره موسیقی کیش",
         big: true,
-        // kept well inside Instagram's safe zone: clear of the top ~220px UI
-        // and bottom ~250px UI, centered in the lower-third black band
         x: 8,
-        y: 76,
+        y: 73,
         w: 84,
-        fontSize: 56,
+        fontSize: 66,
         fontWeight: 900,
         color: "#fff",
         align: "center",
-        lineHeight: 1.4,
+        lineHeight: 1.35,
+      },
+      {
+        // Short date/sub at bottom
+        id: "sub",
+        fieldId: "sub",
+        label: "تاریخ / زیرعنوان کوتاه",
+        defaultVal: "کیش ایز · اخبار روز",
+        x: 8,
+        y: 86,
+        w: 84,
+        fontSize: 28,
+        fontWeight: 400,
+        color: "rgba(255,255,255,.60)",
+        align: "center",
+        letterSpacing: 1,
       },
     ],
     chrome(_f, bg, _op) {
-      const bgS = bg ? `background:url(${bg}) center/cover no-repeat` : "background:linear-gradient(160deg,#0A2E48,#1A7BA0,#2EC4D9)";
-      // Simple, deliberate look: background image + a single gradient that
-      // goes from transparent at top to fully black at the bottom, where the
-      // title sits — nothing else competes with the title for attention.
+      const bgS = bg
+        ? `background:url(${bg}) center/cover no-repeat`
+        : "background:linear-gradient(180deg,#0A2E48 0%,#1A7BA0 45%,#2EC4D9 100%)";
       return `<div style="${bgS};position:absolute;inset:0"></div>
-      <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 0%,transparent 55%,rgba(0,0,0,.55) 70%,rgba(0,0,0,.95) 85%,#000 100%)"></div>`;
+      <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,transparent 22%,transparent 52%,rgba(0,0,0,.6) 68%,rgba(0,0,0,.92) 82%,#000 100%)"></div>
+      <div style="position:absolute;top:0;right:0;width:6px;height:100%;background:linear-gradient(180deg,#D32F2F,#E07B54)"></div>`;
     },
   },
 
+  // ── کاور هایلایت ۱:۱ ──────────────────────────────────────────────────
   {
     id: "highlight",
     cat: "هایلایت ۱:۱  (1080×1080)",
@@ -271,9 +313,9 @@ export const TEMPLATES: Template[] = [
         label: "آیکون (ایموجی)",
         defaultVal: "📍",
         x: 25,
-        y: 32,
+        y: 28,
         w: 50,
-        fontSize: 200,
+        fontSize: 210,
         fontWeight: 400,
         color: "#fff",
         align: "center",
@@ -283,10 +325,10 @@ export const TEMPLATES: Template[] = [
         fieldId: "name",
         label: "نام هایلایت",
         defaultVal: "مکان‌ها",
-        x: 15,
-        y: 60,
-        w: 70,
-        fontSize: 70,
+        x: 10,
+        y: 62,
+        w: 80,
+        fontSize: 74,
         fontWeight: 900,
         color: "#fff",
         align: "center",
@@ -299,17 +341,23 @@ export const TEMPLATES: Template[] = [
     chrome(f, bg, _op) {
       const c1 = f.c1 || "#0B3B5C";
       const c2 = f.c2 || "#1A7BA0";
-      const bgS = bg ? `background:url(${bg}) center/cover no-repeat` : `background:linear-gradient(145deg,${c1},${c2})`;
-      const ovl = bg ? `<div style="position:absolute;inset:0;background:linear-gradient(145deg,${c1}CC,${c2}CC)"></div>` : "";
-      return `<div style="${bgS};position:absolute;inset:0"></div>${ovl}`;
+      const bgS = bg
+        ? `background:url(${bg}) center/cover no-repeat`
+        : `background:linear-gradient(145deg,${c1},${c2})`;
+      const ovl = bg
+        ? `<div style="position:absolute;inset:0;background:linear-gradient(145deg,${c1}CC,${c2}CC)"></div>`
+        : "";
+      return `<div style="${bgS};position:absolute;inset:0"></div>${ovl}
+      <div style="position:absolute;bottom:32px;left:0;right:0;text-align:center;font-family:'Pelak',sans-serif;font-size:22px;font-weight:300;color:rgba(255,255,255,.25);letter-spacing:3px">@KishEase</div>`;
     },
   },
 
+  // ── اسلاید آزاد (branded) ─────────────────────────────────────────────
   {
     id: "blank",
     cat: "اسلاید آزاد",
-    name: "صفحه خالی",
-    icon: "➕",
+    name: "اسلاید آزاد",
+    icon: "✍️",
     w: 1080,
     h: 1080,
     layers: [
@@ -317,22 +365,30 @@ export const TEMPLATES: Template[] = [
         id: "text",
         fieldId: "text",
         label: "متن آزاد",
-        defaultVal: "متن خودت رو اینجا بنویس...",
+        defaultVal: "ادامه مطلب را اینجا بنویس...",
         big: true,
         x: 10,
-        y: 40,
+        y: 36,
         w: 80,
-        fontSize: 48,
+        fontSize: 52,
         fontWeight: 700,
-        color: "#0D1B2A",
-        align: "center",
-        lineHeight: 1.5,
+        color: "#E2E8F0",
+        align: "right",
+        lineHeight: 1.6,
       },
     ],
     chrome(_f, bg, op) {
-      const bgS = bg ? `background:url(${bg}) center/cover no-repeat` : "background:#F8F5EE";
-      const ovl = bg ? `<div style="position:absolute;inset:0;background:rgba(248,245,238,${clamp(op)})"></div>` : "";
-      return `<div style="${bgS};position:absolute;inset:0"></div>${ovl}`;
+      const bgS = bg
+        ? `background:url(${bg}) center/cover no-repeat`
+        : "background:linear-gradient(155deg,#0F1923,#16232F)";
+      const ovl = bg
+        ? `<div style="position:absolute;inset:0;background:rgba(15,25,35,${clamp(op + 0.1)})"></div>`
+        : "";
+      return `<div style="${bgS};position:absolute;inset:0"></div>${ovl}
+      <div style="position:absolute;top:0;right:0;width:6px;height:100%;background:linear-gradient(180deg,#2EC4D9,#1A7BA0)"></div>
+      <div style="position:absolute;top:48px;left:0;right:0;text-align:center;font-family:'Pelak',sans-serif;font-size:16px;font-weight:400;color:rgba(46,196,217,.4);letter-spacing:5px;text-transform:uppercase">KISH EASE · کیش ایز</div>
+      <div style="position:absolute;bottom:48px;left:0;right:0;text-align:center;font-family:'Pelak',sans-serif;font-size:18px;font-weight:300;color:rgba(46,196,217,.3);letter-spacing:3px">@KishEase</div>
+      <div style="position:absolute;bottom:96px;left:10%;right:10%;height:1px;background:rgba(46,196,217,.12)"></div>`;
     },
   },
 ];

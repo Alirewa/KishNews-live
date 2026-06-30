@@ -10,7 +10,6 @@ interface CanvasProps {
   positions: Record<string, Pos>;
   bgImg: string | null;
   opacity: number;
-  /** rendered pixel size on screen; layers use %, so drag math just needs this rect */
   onFieldChange: (fieldId: string, val: string) => void;
   onPositionChange: (layerId: string, pos: Pos) => void;
 }
@@ -21,9 +20,9 @@ export function Canvas({ tpl, fields, positions, bgImg, opacity, onFieldChange, 
   const dragState = useRef<{ layerId: string; startX: number; startY: number; baseX: number; baseY: number } | null>(null);
 
   const startDrag = (e: React.PointerEvent, layerId: string, base: Pos) => {
+    // Stop event fully so the contentEditable text span never receives it.
     e.preventDefault();
     e.stopPropagation();
-    setSelected(layerId);
     dragState.current = { layerId, startX: e.clientX, startY: e.clientY, baseX: base.x, baseY: base.y };
 
     const onMove = (ev: PointerEvent) => {
@@ -33,8 +32,8 @@ export function Canvas({ tpl, fields, positions, bgImg, opacity, onFieldChange, 
       const dxPct = ((ev.clientX - drag.startX) / rect.width) * 100;
       const dyPct = ((ev.clientY - drag.startY) / rect.height) * 100;
       onPositionChange(drag.layerId, {
-        x: Math.max(0, Math.min(95, drag.baseX + dxPct)),
-        y: Math.max(0, Math.min(95, drag.baseY + dyPct)),
+        x: Math.max(0, Math.min(93, drag.baseX + dxPct)),
+        y: Math.max(0, Math.min(93, drag.baseY + dyPct)),
       });
     };
     const onUp = () => {
@@ -62,45 +61,65 @@ export function Canvas({ tpl, fields, positions, bgImg, opacity, onFieldChange, 
         const style = layerStyleObject(layer, pos);
         const isSelected = selected === layer.id;
         return (
+          // Outer wrapper: NOT contentEditable — only handles selection + drag
           <div
             key={layer.id}
             style={{
               ...style,
-              outline: isSelected ? "2px dashed #2EC4D9" : "none",
-              outlineOffset: 4,
-              cursor: "text",
+              outline: isSelected ? "2px dashed rgba(46,196,217,.8)" : "none",
+              outlineOffset: 6,
+              cursor: "default",
               minHeight: 20,
             }}
             onClick={(e) => {
               e.stopPropagation();
               setSelected(layer.id);
             }}
-            suppressContentEditableWarning
-            contentEditable
-            onBlur={(e) => onFieldChange(layer.fieldId, e.currentTarget.innerText)}
           >
-            {layer.pill ? (
-              <span style={{ display: "inline-block", padding: "8px 20px", borderRadius: 6, background: layer.pill.bg, color: layer.pill.color }}>
-                {value}
-              </span>
-            ) : (
-              value
-            )}
+            {/* Inner span: contentEditable for text editing only */}
+            <span
+              contentEditable
+              suppressContentEditableWarning
+              style={{ outline: "none", display: "block", cursor: "text", minHeight: 20 }}
+              onBlur={(e) => onFieldChange(layer.fieldId, e.currentTarget.innerText)}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {layer.pill ? (
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "10px 28px",
+                    borderRadius: 8,
+                    background: layer.pill.bg,
+                    color: layer.pill.color,
+                  }}
+                >
+                  {value}
+                </span>
+              ) : (
+                value
+              )}
+            </span>
+
+            {/* Drag handle: sibling of text span, never inside contentEditable */}
             {isSelected && (
               <span
                 onPointerDown={(e) => startDrag(e, layer.id, pos ?? { x: layer.x, y: layer.y })}
-                contentEditable={false}
                 style={{
                   position: "absolute",
-                  top: -28,
-                  right: 0,
+                  top: -34,
+                  left: "50%",
+                  transform: "translateX(-50%)",
                   background: "#2EC4D9",
                   color: "#0B3B5C",
-                  fontSize: 12,
-                  padding: "2px 8px",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  fontFamily: "sans-serif",
+                  padding: "3px 10px",
                   borderRadius: 4,
                   cursor: "grab",
                   userSelect: "none",
+                  whiteSpace: "nowrap",
                 }}
               >
                 ⠿ جابجایی

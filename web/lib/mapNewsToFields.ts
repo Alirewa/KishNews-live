@@ -1,27 +1,27 @@
 import type { NewsItem } from "./types";
 import type { TemplateFields } from "../components/creator/layerTemplates";
 
-function formatMeta(news: NewsItem) {
-  return [news.sourceName, news.publishedAt].filter(Boolean).join(" · ");
+// Source is always KishEase — the external news source is cited in the
+// article link, not on the visual output (which is published under our brand).
+const BRAND = "KishEase · کیش ایز";
+
+function metaLine(news: NewsItem) {
+  return [BRAND, news.publishedAt].filter(Boolean).join(" · ");
 }
 
-// Keeps each template intentionally short: a title plus at most one short
-// meta/description line. Longer detail belongs in the post caption, not the
-// image — extra context can always go on its own slide via "+ افزودن اسلاید".
 export function mapNewsToFields(news: NewsItem, templateId: string): TemplateFields {
-  const meta = formatMeta(news);
-
+  const meta = metaLine(news);
   switch (templateId) {
     case "news-sq":
-      return { badge: "⚡ خبر فوری", title: news.title, meta };
+      return { badge: "● خبر فوری", title: news.title, meta };
     case "reels":
-      return { title: news.title };
+      return { handle: "@KishEase", title: news.title, sub: meta };
     case "photo-pt":
-      return { cat: news.sourceName, title: news.title, loc: meta };
+      return { cat: "📸 کیش ایز", title: news.title, loc: meta };
     case "loc-sq":
-      return { name_fa: news.title, name_en: meta, desc: news.summary.slice(0, 60) };
+      return { name_fa: news.title, name_en: "@KishEase · KishEase.com", desc: news.summary.slice(0, 60) };
     case "highlight":
-      return { name: news.sourceName };
+      return { name: "کیش ایز", icon: "🏝️" };
     case "blank":
       return { text: news.title };
     default:

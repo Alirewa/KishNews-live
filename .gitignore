@@ -9,3 +9,7 @@ web/.env*.local
 
 .DS_Store
 .claude/scheduled_tasks.lock
+
+# Local editor config
+.claude/
+CLAUDE.md
